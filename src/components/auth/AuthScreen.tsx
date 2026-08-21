@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/authStore'
 import { isMockMode } from '../../services/firebaseClient'
 
 export function AuthScreen() {
-  const { signIn, signUp, signInWithGoogle } = useAuthStore()
+  const { signIn, signUp, signInWithGoogle, error: authError } = useAuthStore()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -15,6 +15,7 @@ export function AuthScreen() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [googleSubmitting, setGoogleSubmitting] = useState(false)
+  const displayError = error || authError
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -66,7 +67,7 @@ export function AuthScreen() {
         </Button>
       )}
 
-      {error && !isMockMode && <p className="mb-3 text-sm text-danger">{error}</p>}
+      {displayError && !isMockMode && <p className="mb-3 text-sm text-danger">{displayError}</p>}
 
       {isMockMode && (
         <>
@@ -96,7 +97,7 @@ export function AuthScreen() {
               required
             />
 
-            {error && <p className="mb-3 text-sm text-danger">{error}</p>}
+            {displayError && <p className="mb-3 text-sm text-danger">{displayError}</p>}
 
             <Button type="submit" fullWidth disabled={submitting}>
               {submitting ? 'Aguarde...' : mode === 'signup' ? 'Criar conta' : 'Entrar'}
