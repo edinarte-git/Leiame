@@ -4,9 +4,10 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { GoogleIcon } from '../ui/GoogleIcon'
 import { useAuthStore } from '../../store/authStore'
+import { isMockMode } from '../../services/firebaseClient'
 
 export function AuthScreen() {
-  const { signIn, signUp } = useAuthStore()
+  const { signIn, signUp, signInWithGoogle } = useAuthStore()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -36,10 +37,10 @@ export function AuthScreen() {
     setError(null)
     setGoogleSubmitting(true)
     try {
-      // TODO: liga de verdade quando a migração para Firebase Auth estiver pronta.
-      await new Promise((resolve) => setTimeout(resolve, 600))
-      setError('Login com Google ainda não está ligado — chega junto com a migração para o Firebase.')
-    } finally {
+      await signInWithGoogle()
+      // Em caso de sucesso, a página redireciona para o Google — não há o que fazer depois daqui.
+    } catch (err) {
+      setError((err as Error).message || 'Não foi possível continuar com o Google.')
       setGoogleSubmitting(false)
     }
   }
@@ -52,56 +53,64 @@ export function AuthScreen() {
         <p className="text-sm text-text-muted">Leia um pouco todo dia. Sem culpa, sem pressa.</p>
       </div>
 
-      <Button
-        variant="secondary"
-        fullWidth
-        onClick={handleGoogleSignIn}
-        disabled={googleSubmitting}
-        className="mb-4"
-      >
-        <GoogleIcon />
-        {googleSubmitting ? 'Aguarde...' : 'Continuar com Google'}
-      </Button>
-
-      <div className="mb-4 flex items-center gap-3 text-xs text-text-muted">
-        <div className="h-px flex-1 bg-border" />
-        ou
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="w-full">
-        {mode === 'signup' && (
-          <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
-        )}
-        <Input
-          label="E-mail"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          label="Senha"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
-          required
-        />
-
-        {error && <p className="mb-3 text-sm text-danger">{error}</p>}
-
-        <Button type="submit" fullWidth disabled={submitting}>
-          {submitting ? 'Aguarde...' : mode === 'signup' ? 'Criar conta' : 'Entrar'}
+      {!isMockMode && (
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={handleGoogleSignIn}
+          disabled={googleSubmitting}
+          className="mb-4"
+        >
+          <GoogleIcon />
+          {googleSubmitting ? 'Aguarde...' : 'Continuar com Google'}
         </Button>
-      </form>
+      )}
 
-      <button
-        onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
-        className="mt-4 text-center text-sm text-text-muted hover:text-text"
-      >
-        {mode === 'signup' ? 'Já tem conta? Entrar' : 'Ainda não tem conta? Criar conta'}
-      </button>
+      {error && !isMockMode && <p className="mb-3 text-sm text-danger">{error}</p>}
+
+      {isMockMode && (
+        <>
+          <div className="mb-4 flex items-center gap-3 text-xs text-text-muted">
+            <div className="h-px flex-1 bg-border" />
+            login por e-mail/senha (modo de teste local)
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="w-full">
+            {mode === 'signup' && (
+              <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
+            )}
+            <Input
+              label="E-mail"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Senha"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+
+            {error && <p className="mb-3 text-sm text-danger">{error}</p>}
+
+            <Button type="submit" fullWidth disabled={submitting}>
+              {submitting ? 'Aguarde...' : mode === 'signup' ? 'Criar conta' : 'Entrar'}
+            </Button>
+          </form>
+
+          <button
+            onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
+            className="mt-4 text-center text-sm text-text-muted hover:text-text"
+          >
+            {mode === 'signup' ? 'Já tem conta? Entrar' : 'Ainda não tem conta? Criar conta'}
+          </button>
+        </>
+      )}
     </div>
   )
 }
