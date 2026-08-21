@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti'
 import { Plus, BookOpen, CheckCircle2, Target } from 'lucide-react'
 import { BookCoverRing } from '../ui/BookCoverRing'
 import { PageStackMeter } from '../ui/PageStackMeter'
+import { ReadingMascot } from '../ui/ReadingMascot'
 import { Button } from '../ui/Button'
 import { RegisterReadingModal } from './RegisterReadingModal'
 import { useBooks } from '../../hooks/useBooks'
@@ -10,6 +11,7 @@ import { useTodayLog } from '../../hooks/useTodayLog'
 import { useAuthStore } from '../../store/authStore'
 import { useLogsStore } from '../../store/logsStore'
 import { calculateProgress } from '../../logic/calculator'
+import { calculateMood } from '../../logic/mood'
 import { quoteOfTheDay } from '../../lib/quotes'
 import { getBadge } from '../../lib/badges'
 import { playChime, playSuccess } from '../../lib/sound'
@@ -52,6 +54,24 @@ export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
     }
     return map
   }, [logs, today])
+
+  const lastLogDateByBook = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const log of logs) {
+      const current = map.get(log.book_id)
+      if (!current || log.date > current) map.set(log.book_id, log.date)
+    }
+    return map
+  }, [logs])
+
+  function daysSinceLastLog(bookId: string): number | null {
+    const lastDate = lastLogDateByBook.get(bookId)
+    if (!lastDate) return null
+    const msPerDay = 1000 * 60 * 60 * 24
+    const todayDate = new Date(today + 'T00:00:00')
+    const lastDateObj = new Date(lastDate + 'T00:00:00')
+    return Math.round((todayDate.getTime() - lastDateObj.getTime()) / msPerDay)
+  }
 
   async function handleRegister(pages: number) {
     if (!activeBook) return
@@ -127,6 +147,7 @@ export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
             const progress = calculateProgress(book.total_pages, book.pages_read, book.daily_goal)
             const pagesToday = pagesReadTodayByBook.get(book.id) ?? 0
             const goalMetToday = pagesToday >= book.daily_goal
+            const mood = calculateMood({ goalMetToday, daysSinceLastLog: daysSinceLastLog(book.id) })
             const pill = STATUS_PILL[book.status]
 
             return (
@@ -137,6 +158,7 @@ export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
               >
                 <div className="flex items-center gap-3">
                   <BookCoverRing coverUrl={book.cover_url} size={52} strokeWidth={3} />
+                  <ReadingMascot mood={mood} size={36} />
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-1.5">
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${pill.className}`}>
