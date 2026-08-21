@@ -15,6 +15,7 @@ import {
 import type { Profile } from '../types'
 
 interface AppUserDocument {
+  [key: string]: unknown
   name: string
   default_daily_goal: number
   theme: 'dark' | 'light'
