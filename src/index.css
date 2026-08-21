@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0e1a;
+  --color-surface: #141a2e;
+  --color-surface-2: #1d2440;
+  --color-border: #2b3358;
+  --color-text: #f2efe6;
+  --color-text-muted: #8b92b8;
+  --color-accent: #e8a33d;
+  --color-accent-2: #f5c77e;
+  --color-success: #4ade80;
+  --color-warning: #e27d5f;
+  --color-danger: #f26d6d;
+  --font-sans: 'Manrope', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+}
+
+:root {
+  color-scheme: dark light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(ellipse 620px 340px at 50% -12%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent),
+    radial-gradient(ellipse 480px 260px at 95% 4%, color-mix(in srgb, var(--color-accent-2) 10%, transparent), transparent),
+    var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.card {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-text) 6%, transparent),
+    0 12px 28px -20px color-mix(in srgb, var(--color-accent) 35%, transparent),
+    0 2px 8px -4px rgba(0, 0, 0, 0.45);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.ember {
+  animation: ember-pulse 2.4s ease-in-out infinite;
+}
+
+.card.ember {
+  border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-warning) 10%, transparent), var(--color-surface));
+}
+
+@keyframes ember-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-warning) 35%, transparent),
+      0 0 14px -2px color-mix(in srgb, var(--color-warning) 55%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-warning) 45%, transparent),
+      0 0 20px -1px color-mix(in srgb, var(--color-warning) 80%, transparent);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ember,
+  .animate-rise {
+    animation: none !important;
+  }
+}
