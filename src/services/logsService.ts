@@ -1,48 +1,28 @@
-import { supabase } from './supabaseClient'
+import { db, doc, collection, getDoc, getDocs, setDoc, query, where, orderBy, increment } from './firebaseClient'
 import { todayIsoDate } from '../lib/date'
 import type { ReadingLog } from '../types'
 
 export async function listLogs(userId: string, sinceDate?: string): Promise<ReadingLog[]> {
-  let query = supabase.from('reading_logs').select('*').eq('user_id', userId)
-  if (sinceDate) query = query.gte('date', sinceDate)
-  const { data, error } = await query.order('date', { ascending: true })
-  if (error) throw error
-  return data as ReadingLog[]
+  const clauses = sinceDate ? [where('date', '>=', sinceDate), orderBy('date', 'asc')] : [orderBy('date', 'asc')]
+  const q = query(collection(db, 'users', userId, 'readingLogs'), ...clauses)
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => ({ id: d.id, user_id: userId, ...(d.data() as Omit<ReadingLog, 'id' | 'user_id'>) }))
 }
 
-/** Registra páginas lidas hoje para um livro. Se já existir um log hoje, soma as páginas. */
-export async function upsertTodayLog(
-  userId: string,
-  bookId: string,
-  pagesRead: number,
-): Promise<ReadingLog> {
-  const today = todayIsoDate()
-
-  const { data: existing, error: fetchError } = await supabase
-    .from('reading_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('book_id', bookId)
-    .eq('date', today)
-    .maybeSingle()
-  if (fetchError) throw fetchError
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from('reading_logs')
-      .update({ pages_read: existing.pages_read + pagesRead })
-      .eq('id', existing.id)
-      .select()
-      .single()
-    if (error) throw error
-    return data as ReadingLog
-  }
-
-  const { data, error } = await supabase
-    .from('reading_logs')
-    .insert({ user_id: userId, book_id: bookId, date: today, pages_read: pagesRead })
-    .select()
-    .single()
-  if (error) throw error
-  return data as ReadingLog
+/** Registra páginas lidas hoje para um livro. Se já existir um log hoje, soma as páginas (atomicamente). */
+export async function upsertTodayLog(userId: string, bookId: string, pagesRead: number): Promise<ReadingLog> {
+  const date = todayIsoDate()
+  const docId = `${bookId}_${date}`
+  const ref = doc(db, 'users', userId, 'readingLogs', docId)
+  // created_at não é lido em nenhum lugar do app (só existe no tipo ReadingLog);
+  // grava-se a cada chamada, inclusive incrementos subsequentes no mesmo dia —
+  // reflete a última escrita, não a criação original, sem custo funcional real.
+  await setDoc(
+    ref,
+    { book_id: bookId, date, pages_read: increment(pagesRead), created_at: new Date().toISOString() },
+    { merge: true },
+  )
+  const snapshot = await getDoc(ref)
+  const data = snapshot.data() as Omit<ReadingLog, 'id' | 'user_id'>
+  return { id: docId, user_id: userId, ...data }
 }
