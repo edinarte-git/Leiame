@@ -50,4 +50,22 @@ describe('mockAuth', () => {
   it('signInWithGoogleRedirect rejeita com uma mensagem amigável (não simulável em mock)', async () => {
     await expect(signInWithGoogleRedirect({})).rejects.toThrow('não está disponível no modo de teste local')
   })
+
+  it('resetMockAuth limpa o array de listeners (evita vazamento entre testes)', async () => {
+    // Registra um listener antes do reset
+    const oldCallback = vi.fn()
+    onAuthStateChanged({}, oldCallback)
+    // O listener foi chamado uma vez ao registrar
+    expect(oldCallback).toHaveBeenCalledTimes(1)
+
+    // Reseta o estado (incluindo listeners)
+    resetMockAuth()
+
+    // Cria um novo usuário após reset
+    await createUserWithEmailAndPassword({}, 'bob@example.com', 'senha456')
+
+    // O listener antigo NÃO deve ter sido chamado após o reset
+    // (teria sido chamado pela createUserWithEmailAndPassword se ainda estivesse registrado)
+    expect(oldCallback).toHaveBeenCalledTimes(1)
+  })
 })

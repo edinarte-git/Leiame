@@ -109,4 +109,5 @@ export async function getGoogleRedirectResult(_auth: unknown): Promise<null> {
 export function resetMockAuth() {
   localStorage.removeItem(USERS_KEY)
   localStorage.removeItem(SESSION_KEY)
+  listeners.length = 0
 }
