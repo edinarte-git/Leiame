@@ -38,11 +38,13 @@
 | `src/hooks/useBooks.ts`, `useStats.ts`, `useTodayLog.ts` | `session` → `user` |
 | `src/components/reading/TodayScreen.tsx`, `BookFormModal.tsx` | `session` → `user` |
 | `src/components/dashboard/DashboardScreen.tsx` | `session` → `user` |
-| `src/components/settings/SettingsScreen.tsx` | `session` → `user`, import de `isMockMode` |
+| `src/components/settings/SettingsScreen.tsx` | `session` → `user`, import de `isMockMode`; depois (Task 9) `buildBackup`/`resetMockData` passam a vir de `backupService`/`firebaseClient` |
 | `src/components/layout/MockModeBanner.tsx` | import de `isMockMode` |
 | `src/components/library/BookDetailModal.tsx` | ganha seletor de `user`, passa `userId` pro `editBook`/`removeBook` |
 | `src/components/auth/AuthScreen.tsx` | liga `signInWithGoogle` de verdade, esconde o botão em modo mock |
 | `src/types/index.ts` | adiciona `AppUser` |
+| `src/services/backupService.ts`, `backupService.test.ts` | (Task 9) `buildBackup` vira assíncrono, compõe sobre `authService`/`booksService`/`logsService`/`statsService` em vez de ler `mockDb.ts` bruto |
+| `src/services/mockDb.ts` | mantido até a Task 9 (ainda usado por `backupService.ts`), **removido** na Task 9 |
 | `firestore.rules` | **novo** |
 | `supabase_schema.sql` | **removido** |
 | `package.json`, `.env`, `.env.example`, `README.md` | trocam Supabase por Firebase |
@@ -617,9 +619,10 @@ git commit -m "Adiciona engine mock de autenticação"
 **Files:**
 - Create: `src/services/firebaseClient.ts`
 - Delete: `src/services/supabaseClient.ts`
-- Delete: `src/services/mockDb.ts`
 - Delete: `src/services/mockSupabase.ts`
 - Modify: `.env`, `.env.example`
+
+> **Nota (achada no preflight/Task 3):** `src/services/mockDb.ts` **NÃO** é apagado nesta task, mesmo já superado pelo `mockFirestore.ts`. Ele ainda é usado por `src/services/backupService.ts` e por `src/components/settings/SettingsScreen.tsx` (a exportação de backup e o botão "Limpar dados de teste local"), que esta migração esqueceu de cobrir. Isso só é resolvido na Task 9 (nova), depois que `authService`/`booksService`/`logsService`/`statsService` já estiverem reescritos — só então `backupService.ts` pode compor sobre eles em vez de ler o `mockDb.ts` bruto. `mockDb.ts` é apagado na Task 9, não aqui.
 
 **Interfaces:**
 - Consumes: tudo de `mockFirestore.ts` (Task 1) e `mockAuth.ts` (Task 2).
@@ -675,38 +678,38 @@ export const auth: unknown = isMockMode ? { __mockAuth: true } : realAuth.getAut
 export const db: unknown = isMockMode ? { __mockFirestore: true } : realFirestore.getFirestore(app!)
 
 // --- Firestore ---
-export const doc = isMockMode ? mockFirestore.doc : (realFirestore.doc as typeof mockFirestore.doc)
+export const doc = isMockMode ? mockFirestore.doc : (realFirestore.doc as unknown as typeof mockFirestore.doc)
 export const collection = isMockMode
   ? mockFirestore.collection
-  : (realFirestore.collection as typeof mockFirestore.collection)
-export const getDoc = isMockMode ? mockFirestore.getDoc : (realFirestore.getDoc as typeof mockFirestore.getDoc)
-export const setDoc = isMockMode ? mockFirestore.setDoc : (realFirestore.setDoc as typeof mockFirestore.setDoc)
+  : (realFirestore.collection as unknown as typeof mockFirestore.collection)
+export const getDoc = isMockMode ? mockFirestore.getDoc : (realFirestore.getDoc as unknown as typeof mockFirestore.getDoc)
+export const setDoc = isMockMode ? mockFirestore.setDoc : (realFirestore.setDoc as unknown as typeof mockFirestore.setDoc)
 export const updateDoc = isMockMode
   ? mockFirestore.updateDoc
-  : (realFirestore.updateDoc as typeof mockFirestore.updateDoc)
+  : (realFirestore.updateDoc as unknown as typeof mockFirestore.updateDoc)
 export const deleteDoc = isMockMode
   ? mockFirestore.deleteDoc
-  : (realFirestore.deleteDoc as typeof mockFirestore.deleteDoc)
-export const addDoc = isMockMode ? mockFirestore.addDoc : (realFirestore.addDoc as typeof mockFirestore.addDoc)
-export const query = isMockMode ? mockFirestore.query : (realFirestore.query as typeof mockFirestore.query)
-export const where = isMockMode ? mockFirestore.where : (realFirestore.where as typeof mockFirestore.where)
-export const orderBy = isMockMode ? mockFirestore.orderBy : (realFirestore.orderBy as typeof mockFirestore.orderBy)
-export const getDocs = isMockMode ? mockFirestore.getDocs : (realFirestore.getDocs as typeof mockFirestore.getDocs)
+  : (realFirestore.deleteDoc as unknown as typeof mockFirestore.deleteDoc)
+export const addDoc = isMockMode ? mockFirestore.addDoc : (realFirestore.addDoc as unknown as typeof mockFirestore.addDoc)
+export const query = isMockMode ? mockFirestore.query : (realFirestore.query as unknown as typeof mockFirestore.query)
+export const where = isMockMode ? mockFirestore.where : (realFirestore.where as unknown as typeof mockFirestore.where)
+export const orderBy = isMockMode ? mockFirestore.orderBy : (realFirestore.orderBy as unknown as typeof mockFirestore.orderBy)
+export const getDocs = isMockMode ? mockFirestore.getDocs : (realFirestore.getDocs as unknown as typeof mockFirestore.getDocs)
 export const increment = isMockMode
   ? mockFirestore.increment
-  : (realFirestore.increment as typeof mockFirestore.increment)
+  : (realFirestore.increment as unknown as typeof mockFirestore.increment)
 
 // --- Auth ---
 export const createUserWithEmailAndPassword = isMockMode
   ? mockAuth.createUserWithEmailAndPassword
-  : (realAuth.createUserWithEmailAndPassword as typeof mockAuth.createUserWithEmailAndPassword)
+  : (realAuth.createUserWithEmailAndPassword as unknown as typeof mockAuth.createUserWithEmailAndPassword)
 export const signInWithEmailAndPassword = isMockMode
   ? mockAuth.signInWithEmailAndPassword
-  : (realAuth.signInWithEmailAndPassword as typeof mockAuth.signInWithEmailAndPassword)
-export const signOutUser = isMockMode ? mockAuth.signOutUser : (realAuth.signOut as typeof mockAuth.signOutUser)
+  : (realAuth.signInWithEmailAndPassword as unknown as typeof mockAuth.signInWithEmailAndPassword)
+export const signOutUser = isMockMode ? mockAuth.signOutUser : (realAuth.signOut as unknown as typeof mockAuth.signOutUser)
 export const onAuthStateChangedCompat = isMockMode
   ? mockAuth.onAuthStateChanged
-  : (realAuth.onAuthStateChanged as typeof mockAuth.onAuthStateChanged)
+  : (realAuth.onAuthStateChanged as unknown as typeof mockAuth.onAuthStateChanged)
 
 export async function updateAuthProfile(user: { uid: string }, patch: { displayName?: string }): Promise<void> {
   if (isMockMode) return mockAuth.updateAuthProfile(user as mockAuth.MockUser, patch)
@@ -729,8 +732,10 @@ export async function getGoogleRedirectResult(authInstance: unknown): Promise<{ 
 - [ ] **Step 3: Apagar os arquivos do Supabase**
 
 ```bash
-rm src/services/supabaseClient.ts src/services/mockDb.ts src/services/mockSupabase.ts supabase_schema.sql
+rm src/services/supabaseClient.ts src/services/mockSupabase.ts supabase_schema.sql
 ```
+
+Não apague `src/services/mockDb.ts` nesta task (veja a nota logo acima da lista de arquivos) — ele é apagado na Task 9.
 
 - [ ] **Step 4: Rodar o typecheck**
 
@@ -1187,7 +1192,7 @@ por:
 ```ts
 const { profile, user, signOut, refreshProfile } = useAuthStore()
 ```
-e todas as 5 ocorrências de `session.user.id`/`session?.user.email`/`if (!session)` no restante do arquivo por `user.uid`/`user?.email`/`if (!user)`. Também troque o import:
+e troque, no restante do arquivo, toda ocorrência de `session.user.id` por `user.uid`, `session?.user.email` por `user?.email`, e `if (!session)` por `if (!user)` — isso aparece em `saveGoal`, `toggleTheme`, `toggleSound`, `exportBackup` e no JSX que mostra o e-mail (9 ocorrências ao todo). Não mexa em mais nada dentro de `exportBackup` além dessa troca de `session.user.id` para `user.uid` — a chamada a `buildBackup(loadDb(), user.uid)` continua exatamente como está (ainda síncrona, ainda importando de `mockDb`/`backupService`); isso só muda na Task 9. Também troque o import:
 ```ts
 import { isMockMode } from '../../services/supabaseClient'
 ```
@@ -1821,7 +1826,275 @@ git commit -m "Reescreve statsService sobre o Firestore"
 
 ---
 
-### Task 9: Ligar "Continuar com Google" de verdade
+### Task 9: `backupService.ts` sobre os serviços reescritos + reset mock unificado
+
+**Files:**
+- Modify: `src/services/backupService.ts`
+- Modify: `src/services/backupService.test.ts`
+- Modify: `src/components/settings/SettingsScreen.tsx`
+- Modify: `src/components/settings/SettingsScreen.test.tsx`
+- Modify: `src/services/firebaseClient.ts` (adiciona `resetMockData`)
+- Delete: `src/services/mockDb.ts`
+
+**Interfaces:**
+- Consumes: `authService.getProfile(uid)` (Task 4), `booksService.listBooks(uid)` (Task 6), `logsService.listLogs(uid)` (Task 7), `statsService.getStats(uid)`/`listEarnedBadges(uid)` (Task 8), `mockFirestore.resetMockFirestore()` (Task 1), `mockAuth.resetMockAuth()` (Task 2).
+- Produces: `buildBackup(userId, now?): Promise<Backup>` — **assinatura muda**: antes era síncrona e recebia `(db: MockTables, userId, now?)`; agora é assíncrona e recebe só `(userId, now?)`, compondo sobre os serviços já reescritos (funciona igual em modo mock ou real). `resetMockData(): void` novo, exportado de `firebaseClient.ts`.
+
+> **Contexto desta task (achado durante a Task 3):** o plano original esqueceu que `src/services/backupService.ts` e o botão de exportar/limpar dados em `SettingsScreen.tsx` liam o `mockDb.ts` diretamente (de uma sessão de trabalho anterior a esta migração). Por isso a Task 3 manteve `mockDb.ts` vivo — esta task finalmente o substitui e apaga.
+
+- [ ] **Step 1: Escrever o teste (falhando)**
+
+Substitua todo o conteúdo de `src/services/backupService.test.ts` por:
+
+```ts
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildBackup } from './backupService'
+import * as authService from './authService'
+import * as booksService from './booksService'
+import * as logsService from './logsService'
+import * as statsService from './statsService'
+import type { Book, Profile, ReadingLog, UserBadge, UserStats } from '../types'
+
+vi.mock('./authService')
+vi.mock('./booksService')
+vi.mock('./logsService')
+vi.mock('./statsService')
+
+const profile: Profile = {
+  id: 'user-1',
+  name: 'Edinart',
+  default_daily_goal: 10,
+  theme: 'dark',
+  sound_enabled: true,
+  onboarded: true,
+  created_at: '2026-01-01T00:00:00.000Z',
+}
+
+const book: Book = {
+  id: 'b1',
+  user_id: 'user-1',
+  title: 'Duna',
+  author: 'Frank Herbert',
+  cover_url: null,
+  total_pages: 400,
+  pages_read: 50,
+  daily_goal: 20,
+  status: 'reading',
+  start_date: '2026-01-01',
+  estimated_completion_date: null,
+  completed_date: null,
+  created_at: '2026-01-01T00:00:00.000Z',
+  updated_at: '2026-01-01T00:00:00.000Z',
+}
+
+const log: ReadingLog = {
+  id: 'b1_2026-01-01',
+  user_id: 'user-1',
+  book_id: 'b1',
+  date: '2026-01-01',
+  pages_read: 50,
+  created_at: '2026-01-01T00:00:00.000Z',
+}
+
+const stats: UserStats = {
+  user_id: 'user-1',
+  current_streak: 3,
+  longest_streak: 5,
+  total_pages_read: 50,
+  xp: 60,
+  level: 1,
+  last_read_date: '2026-01-01',
+  updated_at: '2026-01-01T00:00:00.000Z',
+}
+
+const badge: UserBadge = { user_id: 'user-1', badge_code: 'first_log', earned_at: '2026-01-01T00:00:00.000Z' }
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('buildBackup', () => {
+  it('compõe o backup a partir do perfil, livros, logs, stats e badges do usuário', async () => {
+    vi.spyOn(authService, 'getProfile').mockResolvedValue(profile)
+    vi.spyOn(booksService, 'listBooks').mockResolvedValue([book])
+    vi.spyOn(logsService, 'listLogs').mockResolvedValue([log])
+    vi.spyOn(statsService, 'getStats').mockResolvedValue(stats)
+    vi.spyOn(statsService, 'listEarnedBadges').mockResolvedValue([badge])
+
+    const backup = await buildBackup('user-1', new Date('2026-08-20T12:00:00.000Z'))
+
+    expect(backup.version).toBe(1)
+    expect(backup.exportedAt).toBe('2026-08-20T12:00:00.000Z')
+    expect(backup.profile).toEqual(profile)
+    expect(backup.books).toEqual([book])
+    expect(backup.readingLogs).toEqual([log])
+    expect(backup.stats).toEqual(stats)
+    expect(backup.badges).toEqual(['first_log'])
+  })
+})
+```
+
+- [ ] **Step 2: Rodar e confirmar que falha**
+
+Run: `npx vitest run src/services/backupService.test.ts`
+Expected: falha (a assinatura antiga de `buildBackup` recebia `(db, userId, now?)` e era síncrona; o teste novo chama `buildBackup(userId, now?)` e usa `await`).
+
+- [ ] **Step 3: Reescrever `src/services/backupService.ts`**
+
+```ts
+import * as authService from './authService'
+import * as booksService from './booksService'
+import * as logsService from './logsService'
+import * as statsService from './statsService'
+import type { Book, Profile, ReadingLog, UserStats } from '../types'
+
+export interface Backup {
+  version: 1
+  exportedAt: string
+  profile: Profile
+  books: Book[]
+  readingLogs: ReadingLog[]
+  stats: UserStats
+  badges: string[]
+}
+
+/** Monta um backup exportável com os dados do usuário, compondo sobre os serviços já existentes. */
+export async function buildBackup(userId: string, now: Date = new Date()): Promise<Backup> {
+  const [profile, books, readingLogs, stats, badges] = await Promise.all([
+    authService.getProfile(userId),
+    booksService.listBooks(userId),
+    logsService.listLogs(userId),
+    statsService.getStats(userId),
+    statsService.listEarnedBadges(userId),
+  ])
+  return {
+    version: 1,
+    exportedAt: now.toISOString(),
+    profile,
+    books,
+    readingLogs,
+    stats,
+    badges: badges.map((b) => b.badge_code),
+  }
+}
+```
+
+- [ ] **Step 4: Rodar e confirmar que passa**
+
+Run: `npx vitest run src/services/backupService.test.ts`
+Expected: 1 teste passando.
+
+- [ ] **Step 5: Adicionar `resetMockData` em `src/services/firebaseClient.ts`**
+
+Adicione ao final do arquivo:
+
+```ts
+export function resetMockData(): void {
+  if (!isMockMode) return
+  mockFirestore.resetMockFirestore()
+  mockAuth.resetMockAuth()
+}
+```
+
+- [ ] **Step 6: Atualizar `src/components/settings/SettingsScreen.tsx`**
+
+Troque:
+```ts
+import { loadDb, resetMockData } from '../../services/mockDb'
+import { buildBackup } from '../../services/backupService'
+```
+por:
+```ts
+import { resetMockData } from '../../services/firebaseClient'
+import { buildBackup } from '../../services/backupService'
+```
+
+Troque:
+```ts
+function exportBackup() {
+    if (!user) return
+    const backup = buildBackup(loadDb(), user.uid)
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+```
+por:
+```ts
+async function exportBackup() {
+    if (!user) return
+    const backup = await buildBackup(user.uid)
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+```
+
+(o resto da função `exportBackup` e o botão "Confirmar e apagar tudo" que chama `resetMockData()` continuam exatamente iguais — só a importação muda de arquivo.)
+
+- [ ] **Step 7: Atualizar `src/components/settings/SettingsScreen.test.tsx`**
+
+Substitua todo o conteúdo por:
+
+```tsx
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { SettingsScreen } from './SettingsScreen'
+import * as firebaseClient from '../../services/firebaseClient'
+
+vi.mock('../../services/firebaseClient', () => ({
+  isMockMode: true,
+  auth: {},
+  db: {},
+  resetMockData: vi.fn(),
+}))
+vi.mock('../../services/authService')
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('SettingsScreen - limpar dados de teste', () => {
+  it('não apaga nada só com o clique inicial no botão', () => {
+    render(<SettingsScreen />)
+
+    fireEvent.click(screen.getByText('Limpar dados de teste local'))
+
+    expect(firebaseClient.resetMockData).not.toHaveBeenCalled()
+  })
+
+  it('só apaga depois de digitar a palavra de confirmação e confirmar', () => {
+    const reload = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload },
+    })
+    render(<SettingsScreen />)
+
+    fireEvent.click(screen.getByText('Limpar dados de teste local'))
+    fireEvent.change(screen.getByPlaceholderText('APAGAR'), { target: { value: 'APAGAR' } })
+    fireEvent.click(screen.getByRole('button', { name: /confirmar/i }))
+
+    expect(firebaseClient.resetMockData).toHaveBeenCalled()
+  })
+})
+```
+
+- [ ] **Step 8: Apagar `src/services/mockDb.ts`**
+
+```bash
+rm src/services/mockDb.ts
+```
+
+- [ ] **Step 9: Rodar a suíte inteira**
+
+Run: `npx tsc -b && npx vitest run && npx oxlint`
+Expected: typecheck limpo, todos os testes passando, lint limpo. Nenhum arquivo do projeto deve mais importar `./mockDb` ou `../../services/mockDb` (confirme com `grep -rn "services/mockDb" src`).
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add -A
+git commit -m "Reescreve backupService sobre os serviços já migrados e remove mockDb.ts"
+```
+
+---
+
+### Task 10: Ligar "Continuar com Google" de verdade
 
 **Files:**
 - Modify: `src/components/auth/AuthScreen.tsx`
@@ -1936,7 +2209,7 @@ git commit -m "Liga o login com Google de verdade e o esconde em modo mock"
 
 ---
 
-### Task 10: Regras de segurança, README e `package.json`
+### Task 11: Regras de segurança, README e `package.json`
 
 **Files:**
 - Create: `firestore.rules`
@@ -1996,7 +2269,7 @@ git commit -m "Adiciona firestore.rules e atualiza documentação para Firebase"
 
 ---
 
-### Task 11: Verificação final
+### Task 12: Verificação final
 
 **Files:** nenhum arquivo novo — só verificação.
 
@@ -2026,4 +2299,4 @@ git add -A
 git commit -m "Ajustes finais da migração para Firebase"
 ```
 
-> A partir daqui, testar o login com Google de verdade e a persistência real no Firestore só é possível depois que o dono do projeto configurar um projeto Firebase real (Task 10, passos 1-5) e desligar `VITE_USE_MOCK` — isso é um teste manual, fora do que a suíte automatizada consegue cobrir.
+> A partir daqui, testar o login com Google de verdade e a persistência real no Firestore só é possível depois que o dono do projeto configurar um projeto Firebase real (Task 11, passos 1-5) e desligar `VITE_USE_MOCK` — isso é um teste manual, fora do que a suíte automatizada consegue cobrir.
