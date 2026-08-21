@@ -157,8 +157,12 @@ export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
                 style={{ animationDelay: `${index * 70}ms` }}
               >
                 <div className="flex items-center gap-3">
-                  <BookCoverRing coverUrl={book.cover_url} size={52} strokeWidth={3} />
-                  <ReadingMascot mood={mood} size={36} />
+                  <div className="relative shrink-0">
+                    <BookCoverRing coverUrl={book.cover_url} size={52} strokeWidth={3} />
+                    <div className="absolute -bottom-1.5 -right-1.5 rounded-full bg-surface p-[3px]">
+                      <ReadingMascot mood={mood} size={22} />
+                    </div>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-1.5">
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${pill.className}`}>
