@@ -8,8 +8,8 @@ interface BooksState {
   error: string | null
   fetchBooks: (userId: string) => Promise<void>
   addBook: (userId: string, book: NewBook) => Promise<Book>
-  editBook: (bookId: string, patch: Partial<Book>) => Promise<Book>
-  removeBook: (bookId: string) => Promise<void>
+  editBook: (userId: string, bookId: string, patch: Partial<Book>) => Promise<Book>
+  removeBook: (userId: string, bookId: string) => Promise<void>
   applyLocal: (book: Book) => void
 }
 
@@ -36,14 +36,14 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     return created
   },
 
-  editBook: async (bookId, patch) => {
-    const updated = await booksService.updateBook(bookId, patch)
+  editBook: async (userId, bookId, patch) => {
+    const updated = await booksService.updateBook(userId, bookId, patch)
     set({ books: get().books.map((b) => (b.id === bookId ? updated : b)) })
     return updated
   },
 
-  removeBook: async (bookId) => {
-    await booksService.deleteBook(bookId)
+  removeBook: async (userId, bookId) => {
+    await booksService.deleteBook(userId, bookId)
     set({ books: get().books.filter((b) => b.id !== bookId) })
   },
 

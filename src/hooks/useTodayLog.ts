@@ -47,7 +47,7 @@ export function useTodayLog() {
 
         const progress = calculateProgress(book.total_pages, book.pages_read + pagesRead, book.daily_goal)
         const bookJustCompleted = progress.isComplete && book.status !== 'completed'
-        const updatedBook = await booksService.updateBook(book.id, {
+        const updatedBook = await booksService.updateBook(userId, book.id, {
           pages_read: progress.pagesRead,
           estimated_completion_date: progress.estimatedCompletionDate,
           status: progress.isComplete ? 'completed' : 'reading',

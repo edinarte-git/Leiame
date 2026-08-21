@@ -44,7 +44,7 @@ export function BookFormModal({ open, book, onClose }: BookFormModalProps) {
     setError(null)
     try {
       if (isEditing && book) {
-        await editBook(book.id, {
+        await editBook(user.uid, book.id, {
           title,
           author,
           total_pages: totalPages,

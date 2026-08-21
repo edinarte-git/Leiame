@@ -7,6 +7,7 @@ import { PageStackMeter } from '../ui/PageStackMeter'
 import { calculateProgress } from '../../logic/calculator'
 import { formatDateLong, todayIsoDate } from '../../lib/date'
 import { useBooksStore } from '../../store/booksStore'
+import { useAuthStore } from '../../store/authStore'
 import type { Book, BookStatus } from '../../types'
 
 const STATUS_LABEL: Record<BookStatus, string> = {
@@ -25,6 +26,7 @@ interface BookDetailModalProps {
 export function BookDetailModal({ book, onClose, onEdit }: BookDetailModalProps) {
   const editBook = useBooksStore((s) => s.editBook)
   const removeBook = useBooksStore((s) => s.removeBook)
+  const user = useAuthStore((s) => s.user)
   const [busy, setBusy] = useState(false)
 
   if (!book) return null
@@ -32,10 +34,10 @@ export function BookDetailModal({ book, onClose, onEdit }: BookDetailModalProps)
   const progress = calculateProgress(book.total_pages, book.pages_read, book.daily_goal)
 
   async function setStatus(status: BookStatus) {
-    if (!book) return
+    if (!book || !user) return
     setBusy(true)
     try {
-      await editBook(book.id, {
+      await editBook(user.uid, book.id, {
         status,
         start_date: status === 'reading' && !book.start_date ? todayIsoDate() : book.start_date,
       })
@@ -45,11 +47,11 @@ export function BookDetailModal({ book, onClose, onEdit }: BookDetailModalProps)
   }
 
   async function handleDelete() {
-    if (!book) return
+    if (!book || !user) return
     if (!confirm(`Remover "${book.title}" da sua biblioteca?`)) return
     setBusy(true)
     try {
-      await removeBook(book.id)
+      await removeBook(user.uid, book.id)
       onClose()
     } finally {
       setBusy(false)
