@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BookMarked } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { GoogleIcon } from '../ui/GoogleIcon'
 import { useAuthStore } from '../../store/authStore'
 
 export function AuthScreen() {
@@ -12,6 +13,7 @@ export function AuthScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,12 +32,41 @@ export function AuthScreen() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setError(null)
+    setGoogleSubmitting(true)
+    try {
+      // TODO: liga de verdade quando a migração para Firebase Auth estiver pronta.
+      await new Promise((resolve) => setTimeout(resolve, 600))
+      setError('Login com Google ainda não está ligado — chega junto com a migração para o Firebase.')
+    } finally {
+      setGoogleSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex flex-1 flex-col justify-center px-6 py-10">
       <div className="mb-8 flex flex-col items-center gap-2 text-center">
         <BookMarked size={40} className="text-accent" />
         <h1 className="font-display text-3xl font-semibold text-text">Leiame</h1>
         <p className="text-sm text-text-muted">Leia um pouco todo dia. Sem culpa, sem pressa.</p>
+      </div>
+
+      <Button
+        variant="secondary"
+        fullWidth
+        onClick={handleGoogleSignIn}
+        disabled={googleSubmitting}
+        className="mb-4"
+      >
+        <GoogleIcon />
+        {googleSubmitting ? 'Aguarde...' : 'Continuar com Google'}
+      </Button>
+
+      <div className="mb-4 flex items-center gap-3 text-xs text-text-muted">
+        <div className="h-px flex-1 bg-border" />
+        ou
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       <form onSubmit={handleSubmit} className="w-full">
