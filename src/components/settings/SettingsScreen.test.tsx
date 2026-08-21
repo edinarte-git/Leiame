@@ -1,10 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SettingsScreen } from './SettingsScreen'
-import * as mockDb from '../../services/mockDb'
+import * as firebaseClient from '../../services/firebaseClient'
 
-vi.mock('../../services/firebaseClient', () => ({ isMockMode: true, auth: {}, db: {} }))
-vi.mock('../../services/mockDb')
+vi.mock('../../services/firebaseClient', () => ({
+  isMockMode: true,
+  auth: {},
+  db: {},
+  resetMockData: vi.fn(),
+}))
 vi.mock('../../services/authService')
 
 afterEach(() => {
@@ -17,7 +21,7 @@ describe('SettingsScreen - limpar dados de teste', () => {
 
     fireEvent.click(screen.getByText('Limpar dados de teste local'))
 
-    expect(mockDb.resetMockData).not.toHaveBeenCalled()
+    expect(firebaseClient.resetMockData).not.toHaveBeenCalled()
   })
 
   it('só apaga depois de digitar a palavra de confirmação e confirmar', () => {
@@ -32,6 +36,6 @@ describe('SettingsScreen - limpar dados de teste', () => {
     fireEvent.change(screen.getByPlaceholderText('APAGAR'), { target: { value: 'APAGAR' } })
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }))
 
-    expect(mockDb.resetMockData).toHaveBeenCalled()
+    expect(firebaseClient.resetMockData).toHaveBeenCalled()
   })
 })

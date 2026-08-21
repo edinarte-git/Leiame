@@ -91,3 +91,9 @@ export async function getGoogleRedirectResult(authInstance: unknown): Promise<{ 
   const result = await realAuth.getRedirectResult(authInstance as realAuth.Auth)
   return result?.user ?? null
 }
+
+export function resetMockData(): void {
+  if (!isMockMode) return
+  mockFirestore.resetMockFirestore()
+  mockAuth.resetMockAuth()
+}

@@ -5,8 +5,7 @@ import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
 import { useAuthStore } from '../../store/authStore'
 import * as authService from '../../services/authService'
-import { isMockMode } from '../../services/firebaseClient'
-import { loadDb, resetMockData } from '../../services/mockDb'
+import { isMockMode, resetMockData } from '../../services/firebaseClient'
 import { buildBackup } from '../../services/backupService'
 import { todayIsoDate } from '../../lib/date'
 
@@ -43,9 +42,9 @@ export function SettingsScreen() {
     await refreshProfile()
   }
 
-  function exportBackup() {
+  async function exportBackup() {
     if (!user) return
-    const backup = buildBackup(loadDb(), user.uid)
+    const backup = await buildBackup(user.uid)
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
