@@ -46,6 +46,7 @@ function collectionNameFor(path: string[]): CollectionName | null {
 export interface MockDocRef {
   __mockDocRef: true
   path: string[]
+  id: string
 }
 
 export interface MockCollectionRef {
@@ -77,7 +78,7 @@ function resolveIncrements(existing: DocData, patch: DocData): DocData {
 }
 
 export function doc(_db: unknown, ...path: string[]): MockDocRef {
-  return { __mockDocRef: true, path }
+  return { __mockDocRef: true, path, id: path[path.length - 1] }
 }
 
 export function collection(_db: unknown, ...path: string[]): MockCollectionRef {
@@ -105,7 +106,7 @@ export interface MockDocSnapshot {
 export async function getDoc(ref: MockDocRef): Promise<MockDocSnapshot> {
   const data = readRawDoc(ref.path)
   return {
-    id: ref.path[ref.path.length - 1],
+    id: ref.id,
     exists: () => data !== undefined,
     data: () => data,
   }
@@ -148,7 +149,8 @@ function generateId(): string {
 }
 
 export async function addDoc(ref: MockCollectionRef, data: DocData): Promise<MockDocRef> {
-  const docRef: MockDocRef = { __mockDocRef: true, path: [...ref.path, generateId()] }
+  const id = generateId()
+  const docRef: MockDocRef = { __mockDocRef: true, path: [...ref.path, id], id }
   await setDoc(docRef, data)
   return docRef
 }

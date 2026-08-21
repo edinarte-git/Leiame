@@ -20,7 +20,7 @@ export async function createBook(userId: string, book: NewBook): Promise<Book> {
     updated_at: now,
   }
   const ref = await addDoc(collection(db, 'users', userId, 'books'), data)
-  return { id: ref.path[ref.path.length - 1], user_id: userId, ...data }
+  return { id: ref.id, user_id: userId, ...data }
 }
 
 export async function updateBook(userId: string, bookId: string, patch: Partial<Book>): Promise<Book> {
