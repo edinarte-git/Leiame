@@ -3,13 +3,13 @@ import { useBooksStore } from '../store/booksStore'
 import { useAuthStore } from '../store/authStore'
 
 export function useBooks() {
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const store = useBooksStore()
 
   useEffect(() => {
-    if (session) store.fetchBooks(session.user.id)
+    if (user) store.fetchBooks(user.uid)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user.id])
+  }, [user?.uid])
 
   return store
 }

@@ -26,7 +26,7 @@ const STATUS_PILL: Record<BookStatus, { label: string; className: string }> = {
 export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
   const { books } = useBooks()
   const { registerReading, submitting, error } = useTodayLog()
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const profile = useAuthStore((s) => s.profile)
   const logs = useLogsStore((s) => s.logs)
   const fetchLogs = useLogsStore((s) => s.fetchLogs)
@@ -34,9 +34,9 @@ export function TodayScreen({ onAddBook }: { onAddBook: () => void }) {
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
-    if (session) fetchLogs(session.user.id)
+    if (user) fetchLogs(user.uid)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user.id])
+  }, [user?.uid])
 
   const activeBooks = useMemo(
     () => books.filter((b) => b.status === 'reading' || b.status === 'want_to_read'),

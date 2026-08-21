@@ -3,16 +3,16 @@ import { useStatsStore } from '../store/statsStore'
 import { useAuthStore } from '../store/authStore'
 
 export function useStats() {
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const store = useStatsStore()
 
   useEffect(() => {
-    if (session) {
-      store.fetchStats(session.user.id)
-      store.fetchBadges(session.user.id)
+    if (user) {
+      store.fetchStats(user.uid)
+      store.fetchBadges(user.uid)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user.id])
+  }, [user?.uid])
 
   return store
 }

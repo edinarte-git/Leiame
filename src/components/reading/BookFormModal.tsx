@@ -14,7 +14,7 @@ interface BookFormModalProps {
 }
 
 export function BookFormModal({ open, book, onClose }: BookFormModalProps) {
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const profile = useAuthStore((s) => s.profile)
   const addBook = useBooksStore((s) => s.addBook)
   const editBook = useBooksStore((s) => s.editBook)
@@ -39,7 +39,7 @@ export function BookFormModal({ open, book, onClose }: BookFormModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session) return
+    if (!user) return
     setSubmitting(true)
     setError(null)
     try {
@@ -60,7 +60,7 @@ export function BookFormModal({ open, book, onClose }: BookFormModalProps) {
           cover_url: coverUrl,
           status: 'reading',
         }
-        await addBook(session.user.id, newBook)
+        await addBook(user.uid, newBook)
         reset()
       }
       onClose()

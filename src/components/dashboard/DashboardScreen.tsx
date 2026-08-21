@@ -11,16 +11,16 @@ import { BADGES } from '../../lib/badges'
 const SKILL_ICONS: Record<string, LucideIcon> = { Brain, PenLine, Mic, GraduationCap, Sparkles }
 
 export function DashboardScreen() {
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const { stats, badges, error: statsError } = useStats()
   const logs = useLogsStore((s) => s.logs)
   const fetchLogs = useLogsStore((s) => s.fetchLogs)
   const logsError = useLogsStore((s) => s.error)
 
   useEffect(() => {
-    if (session) fetchLogs(session.user.id)
+    if (user) fetchLogs(user.uid)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user.id])
+  }, [user?.uid])
 
   const dailyTotals = useMemo(() => buildDailyTotals(logs), [logs])
   const earnedCodes = useMemo(() => new Set(badges.map((b) => b.badge_code)), [badges])

@@ -4,7 +4,7 @@ import { useTodayLog } from './useTodayLog'
 import { useAuthStore } from '../store/authStore'
 import * as logsService from '../services/logsService'
 import type { Book } from '../types'
-import type { Session } from '@supabase/supabase-js'
+import type { AppUser } from '../types'
 
 vi.mock('../services/logsService')
 vi.mock('../services/booksService')
@@ -27,16 +27,16 @@ const book: Book = {
   updated_at: '2026-01-01T00:00:00.000Z',
 }
 
-const fakeSession = { user: { id: 'user-1' } } as unknown as Session
+const fakeUser: AppUser = { uid: 'user-1', email: 'user@example.com', displayName: 'Usuário' }
 
 afterEach(() => {
   vi.restoreAllMocks()
-  useAuthStore.setState({ session: null })
+  useAuthStore.setState({ user: null })
 })
 
 describe('useTodayLog.registerReading', () => {
   it('returns null and exposes an error message when a write fails, instead of throwing', async () => {
-    useAuthStore.setState({ session: fakeSession })
+    useAuthStore.setState({ user: fakeUser })
     vi.spyOn(logsService, 'upsertTodayLog').mockRejectedValue(new Error('offline'))
 
     const { result } = renderHook(() => useTodayLog())

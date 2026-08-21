@@ -58,10 +58,10 @@ function AppShell() {
 }
 
 function App() {
-  const { session, profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
   if (loading) return <SplashScreen />
-  if (!session)
+  if (!user)
     return (
       <>
         <MockModeBanner />

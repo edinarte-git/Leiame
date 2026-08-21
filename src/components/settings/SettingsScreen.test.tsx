@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SettingsScreen } from './SettingsScreen'
 import * as mockDb from '../../services/mockDb'
 
-vi.mock('../../services/supabaseClient', () => ({ isMockMode: true, supabase: {} }))
+vi.mock('../../services/firebaseClient', () => ({ isMockMode: true, auth: {}, db: {} }))
 vi.mock('../../services/mockDb')
 vi.mock('../../services/authService')
 

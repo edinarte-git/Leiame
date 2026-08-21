@@ -5,7 +5,7 @@ import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
 import { useAuthStore } from '../../store/authStore'
 import * as authService from '../../services/authService'
-import { isMockMode } from '../../services/supabaseClient'
+import { isMockMode } from '../../services/firebaseClient'
 import { loadDb, resetMockData } from '../../services/mockDb'
 import { buildBackup } from '../../services/backupService'
 import { todayIsoDate } from '../../lib/date'
@@ -13,17 +13,17 @@ import { todayIsoDate } from '../../lib/date'
 const CONFIRM_WORD = 'APAGAR'
 
 export function SettingsScreen() {
-  const { profile, session, signOut, refreshProfile } = useAuthStore()
+  const { profile, user, signOut, refreshProfile } = useAuthStore()
   const [dailyGoal, setDailyGoal] = useState(profile?.default_daily_goal ?? 10)
   const [saving, setSaving] = useState(false)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [confirmText, setConfirmText] = useState('')
 
   async function saveGoal() {
-    if (!session) return
+    if (!user) return
     setSaving(true)
     try {
-      await authService.updateProfile(session.user.id, { default_daily_goal: dailyGoal })
+      await authService.updateProfile(user.uid, { default_daily_goal: dailyGoal })
       await refreshProfile()
     } finally {
       setSaving(false)
@@ -31,21 +31,21 @@ export function SettingsScreen() {
   }
 
   async function toggleTheme() {
-    if (!session || !profile) return
+    if (!user || !profile) return
     const theme = profile.theme === 'dark' ? 'light' : 'dark'
-    await authService.updateProfile(session.user.id, { theme })
+    await authService.updateProfile(user.uid, { theme })
     await refreshProfile()
   }
 
   async function toggleSound() {
-    if (!session || !profile) return
-    await authService.updateProfile(session.user.id, { sound_enabled: !profile.sound_enabled })
+    if (!user || !profile) return
+    await authService.updateProfile(user.uid, { sound_enabled: !profile.sound_enabled })
     await refreshProfile()
   }
 
   function exportBackup() {
-    if (!session) return
-    const backup = buildBackup(loadDb(), session.user.id)
+    if (!user) return
+    const backup = buildBackup(loadDb(), user.uid)
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -61,7 +61,7 @@ export function SettingsScreen() {
 
       <div className="mb-5 card p-4">
         <p className="mb-1 text-sm font-medium text-text">{profile?.name || 'Leitor(a)'}</p>
-        <p className="text-xs text-text-muted">{session?.user.email}</p>
+        <p className="text-xs text-text-muted">{user?.email}</p>
       </div>
 
       <div className="mb-5 card p-4">

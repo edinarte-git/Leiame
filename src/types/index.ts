@@ -1,5 +1,11 @@
 export type BookStatus = 'want_to_read' | 'reading' | 'paused' | 'completed'
 
+export interface AppUser {
+  uid: string
+  email: string | null
+  displayName: string | null
+}
+
 export interface Profile {
   id: string
   name: string

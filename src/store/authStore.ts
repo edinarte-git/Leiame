@@ -1,45 +1,40 @@
 import { create } from 'zustand'
-import type { Session } from '@supabase/supabase-js'
-import type { Profile } from '../types'
-import { supabase } from '../services/supabaseClient'
+import type { AppUser, Profile } from '../types'
+import { auth, onAuthStateChangedCompat } from '../services/firebaseClient'
 import * as authService from '../services/authService'
 
 interface AuthState {
-  session: Session | null
+  user: AppUser | null
   profile: Profile | null
   loading: boolean
   error: string | null
   init: () => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   completeOnboarding: (defaultDailyGoal: number) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  session: null,
+  user: null,
   profile: null,
   loading: true,
   error: null,
 
   init: async () => {
-    set({ loading: true })
     try {
-      const session = await authService.getSession()
-      set({ session })
-      if (session) {
-        const profile = await authService.getProfile(session.user.id)
-        set({ profile })
-      }
-    } finally {
-      set({ loading: false })
+      await authService.consumeGoogleRedirectResult()
+    } catch (err) {
+      set({ error: (err as Error).message })
     }
 
-    supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      set({ session })
-      if (session) {
-        const profile = await authService.getProfile(session.user.id)
+    onAuthStateChangedCompat(auth, async (user) => {
+      const appUser: AppUser | null = user ? { uid: user.uid, email: user.email, displayName: user.displayName } : null
+      set({ user: appUser, loading: false })
+      if (appUser) {
+        const profile = await authService.getProfile(appUser.uid, appUser.displayName ?? '')
         set({ profile })
       } else {
         set({ profile: null })
@@ -67,22 +62,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  signInWithGoogle: async () => {
+    set({ error: null })
+    try {
+      await authService.signInWithGoogle()
+    } catch (err) {
+      set({ error: (err as Error).message })
+      throw err
+    }
+  },
+
   signOut: async () => {
     await authService.signOut()
-    set({ session: null, profile: null })
+    set({ user: null, profile: null })
   },
 
   refreshProfile: async () => {
-    const session = get().session
-    if (!session) return
-    const profile = await authService.getProfile(session.user.id)
+    const user = get().user
+    if (!user) return
+    const profile = await authService.getProfile(user.uid)
     set({ profile })
   },
 
   completeOnboarding: async (defaultDailyGoal) => {
-    const session = get().session
-    if (!session) return
-    const profile = await authService.updateProfile(session.user.id, {
+    const user = get().user
+    if (!user) return
+    const profile = await authService.updateProfile(user.uid, {
       default_daily_goal: defaultDailyGoal,
       onboarded: true,
     })

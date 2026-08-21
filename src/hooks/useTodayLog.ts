@@ -25,7 +25,7 @@ export interface RegisterResult {
 export function useTodayLog() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
   const applyLocalLog = useLogsStore((s) => s.applyLocal)
   const applyLocalBook = useBooksStore((s) => s.applyLocal)
   const stats = useStatsStore((s) => s.stats)
@@ -35,11 +35,11 @@ export function useTodayLog() {
 
   const registerReading = useCallback(
     async (book: Book, pagesRead: number): Promise<RegisterResult | null> => {
-      if (!session || pagesRead <= 0) return null
+      if (!user || pagesRead <= 0) return null
       setSubmitting(true)
       setError(null)
       try {
-        const userId = session.user.id
+        const userId = user.uid
         const isFirstLogEver = !stats || stats.total_pages_read === 0
 
         const log = await logsService.upsertTodayLog(userId, book.id, pagesRead)
@@ -112,7 +112,7 @@ export function useTodayLog() {
         setSubmitting(false)
       }
     },
-    [session, stats, badges, applyLocalLog, applyLocalBook, applyStats, applyNewBadges],
+    [user, stats, badges, applyLocalLog, applyLocalBook, applyStats, applyNewBadges],
   )
 
   return { registerReading, submitting, error }
