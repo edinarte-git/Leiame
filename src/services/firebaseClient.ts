@@ -83,7 +83,13 @@ export async function updateAuthProfile(user: { uid: string }, patch: { displayN
 export async function signInWithGoogleRedirect(authInstance: unknown): Promise<void> {
   if (isMockMode) return mockAuth.signInWithGoogleRedirect(authInstance)
   const provider = new realAuth.GoogleAuthProvider()
-  await realAuth.signInWithRedirect(authInstance as realAuth.Auth, provider)
+  // Popup em vez de redirecionamento: o redirecionamento depende de o navegador
+  // repassar o estado da autenticação entre domínios (app -> authDomain do
+  // Firebase -> app de volta) via armazenamento de terceiros, o que Chrome/
+  // Edge/Firefox vêm bloqueando cada vez mais — falha em silêncio, sem erro
+  // nenhum, e volta pra tela de login. Popup usa postMessage entre janelas e
+  // não depende desse relé de armazenamento.
+  await realAuth.signInWithPopup(authInstance as realAuth.Auth, provider)
 }
 
 export async function getGoogleRedirectResult(authInstance: unknown): Promise<{ uid: string } | null> {

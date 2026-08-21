@@ -39,9 +39,10 @@ export function AuthScreen() {
     setGoogleSubmitting(true)
     try {
       await signInWithGoogle()
-      // Em caso de sucesso, a página redireciona para o Google — não há o que fazer depois daqui.
+      // Sucesso: o authStore já recebe o usuário via onAuthStateChanged, o App.tsx troca de tela sozinho.
     } catch (err) {
       setError((err as Error).message || 'Não foi possível continuar com o Google.')
+    } finally {
       setGoogleSubmitting(false)
     }
   }
